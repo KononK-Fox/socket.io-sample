@@ -52,8 +52,8 @@
 
     <div class="form">
         <form onsubmit="app.doSendMessage(); return false;">
-            <input id="txtTo" class="input-message" />
-            <input id="txtMessage" class="input-message" />
+            <input id="txtTo" class="input-message" placeholder="To" />
+            <textarea id="txtMessage" class="input-message" placeholder="Message" rows="5"></textarea>
             <button type="submit">Send</button>
         </form>
     </div>
@@ -73,7 +73,9 @@
                 return
             }
 
-            app.name = prompt("Please enter your name", "");
+            do {
+                app.name = prompt("Please enter your name", "");
+            } while (app.name == '')
 
             app.container = document.querySelector('.container')
 
@@ -124,7 +126,11 @@
                 message,
                 to,
             }))
-            app.print(`<b>me</b>: ${message}`)
+            if (to == '') {
+                app.print(`<b>me -> all</b>: ${message}`)
+            } else {
+                app.print(`<b>me -> ${to}</b>: ${message}`)
+            }
             document.getElementById('txtMessage').value = ''
         }
 

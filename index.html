@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebSocket</title>
+
+    <style type="text/css">
+        .form {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background-color: #f9f9f9;
+            border-top: 1px solid #78b8ef;
+            padding: 5px 10px;
+        }
+
+        .form .input-message,
+        .form button {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form .input-message {
+            padding: 7px;
+            border: 1px solid #ecebeb;
+            border-radius: 4px;
+            width: -webkit-fill-available;
+        }
+
+        .form button {
+            width: 100%;
+            color: white;
+            padding: 7px 10px;
+            border-radius: 4px;
+            background-color: #78b8ef;
+            border: 1px solid #5a9ed8;
+        }
+
+        .container {
+            margin-bottom: 50px;
+        }
+
+        .container p {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container"></div>
+
+    <div class="form">
+        <form onsubmit="app.doSendMessage(); return false;">
+            <input id="txtTo" class="input-message" />
+            <input id="txtMessage" class="input-message" />
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+
+    <script type="text/javascript">
+        var app = {}
+        app.name = undefined
+        app.users = []
+        app.socket = undefined
+        app.container = undefined
+
+        app.init = function () {
+            if (!(window.WebSocket)) {
+                alert('Your browser does not support WebSocket')
+                return
+            }
+
+            app.name = prompt("Please enter your name", "");
+
+            app.container = document.querySelector('.container')
+
+            app.socket = io("ws://localhost:8080/socket.io/")
+
+            app.socket.on("connect", () => {
+                app.socket.emit("event_join", JSON.stringify({
+                    name: app.name,
+                }))
+                app.print('<b>me</b>: connected')
+            })
+
+            app.socket.on("event_join", function (message) {
+                jsonObj = JSON.parse(message)
+                if (jsonObj.name != app.name) {
+                    app.print(`<b>${jsonObj.name}</b>: connected`)
+                }
+            })
+
+            app.socket.on("event_chat", function (message) {
+                jsonObj = JSON.parse(message)
+                if (jsonObj.name != app.name) {
+                    app.print(`<b>${jsonObj.name}</b>: ${jsonObj.message}`)
+                }
+            })
+
+            app.socket.on("disconnect", (reason) => {
+                if (reason === "io server disconnect") {
+                    app.socket.connect();
+                }
+                else {
+                    app.print('<b>me</b>: disconnected')
+                }
+            })
+        }
+
+        app.print = function (message) {
+            var el = document.createElement("p")
+            el.innerHTML = message
+            app.container.prepend(el)
+        }
+
+        app.doSendMessage = function () {
+            to = document.getElementById('txtTo').value
+            message = document.getElementById('txtMessage').value
+            app.socket.emit('event_chat', JSON.stringify({
+                name: app.name,
+                message,
+                to,
+            }))
+            app.print(`<b>me</b>: ${message}`)
+            document.getElementById('txtMessage').value = ''
+        }
+
+        window.onload = app.init
+    </script>
+</body>
+
+</html>
